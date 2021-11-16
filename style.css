@@ -1,3 +1,31 @@
+:root {
+  /* https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=5E35B1&secondary.color=9CCC65 */
+  --main-primary-bg-color: #5e35b1;
+  --main-primary-bg-color-light: #9162e4;
+  --main-primary-bg-color-dark: #280680;
+  --main-primary-fg-color: #fff;
+  --main-primary-fg-color-light: #000;
+  --main-primary-fg-color-dark: #fff;
+
+  --main-secondary-bg-color: #9ccc65;
+  --main-secondary-bg-color-light: #cfff95;
+  --main-secondary-bg-color-dark: #6b9b37;
+  --main-secondary-fg-color: #000;
+  --main-secondary-fg-color-light: #000;
+  --main-secondary-fg-color-dark: #000;
+
+  --main-bg-color: #F5F5F6;
+  --main-bg-color-dark: #E1E2E1;
+  --main-bg-color-light: #FFF;
+  
+  --main-fg-color: #000;
+
+  --header-height: 3rem;
+  --header-height-big: 4rem;
+  --header-height-small: 2rem;:
+}
+
+
 * {
   box-sizing: border-box;
 }
@@ -5,6 +33,8 @@
 html, body {
   padding: 0;
   margin: 0;
+  background-color: var(--main-bg-color);
+  color: var(--main-fg-color);
 }
 
 body > * {
@@ -12,24 +42,35 @@ body > * {
 }
 
 section > * {
+  margin: 1rem 0 0 0;
+}
+
+section > *:last-child {
   margin: 1rem 0;
 }
 
 h1, h2, footer {
   width: 100%;
-  background-color: blue;
   margin: 0;
   padding: .5ex 1em;
-  color: white;
-  height: 3rem;
+  height: var(--header-height-big);
+  line-height: calc( var(--header-height-big) - 1ex );
+  background-color: var(--main-primary-bg-color-dark);
+  color:  var(--main-primary-fg-color-dark);
 }
 
 footer {
-  height: 2rem;
+  height: var(--header-height-small);
+  line-height: calc( var(--header-height-small) - 1ex );
+  font-size: 80%;
 }
 
 h2 {
   cursor: pointer;
+  background-color: var(--main-primary-bg-color);
+  color:  var(--main-primary-fg-color);
+  height: var(--header-height);
+  line-height: calc( var(--header-height) - 1ex );
 }
 
 h2::before {
@@ -51,11 +92,12 @@ h2.collapsed + section {
 h2 + section {
   overflow: auto;
   transition: height .35s;
-  height: calc( 100vh - 3 * 3rem - 2rem ); /* 3 headers and 1 footer */
+  height: calc( 100vh - var(--header-height-big) - 2 * var(--header-height) - var(--header-height-small) );
 }
 
 table {
   border-collapse: collapse;
+  box-shadow: 1px 1px 3px #4f4f4f;
 }
 
 td {
@@ -65,4 +107,39 @@ td {
 
 td:first-child {
   text-align: center;
+}
+
+input[type='text'] {
+  border-radius: 10px;
+  border: 1px solid gray;
+  padding: .4em 3em .4em 1em;
+  box-shadow: 1px 1px 3px #4f4f4f;
+  transition: all .2s;
+}
+
+input[type='text']:focus {
+  border-color: var(--main-secondary-bg-color);
+  box-shadow: 1px 1px 3px var(--main-secondary-bg-color-dark);
+  outline: none !important;
+}
+
+#reset-to-spell  {
+  position: relative;
+  width: 2em;
+  height: 2em;
+  border-radius: 2em;
+  border: 0;
+  color: var(--main-secondary-fg-color-dark);
+  background-color: var(--main-secondary-bg-color-dark);
+  left: -2.5em;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+#reset-to-spell:hover {
+  background-color: var(--main-secondary-bg-color);  
+}
+
+#reset-to-spell:active {
+  background-color: var(--main-secondary-bg-color-light);
 }

@@ -70,6 +70,10 @@ function init() {
     writeSpelling();
     
     userInput.addEventListener('input', writeSpelling);
+    document.querySelector('#reset-to-spell').addEventListener('click', function(){
+        userInput.value = '';
+        writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
+    });
 
     makeAccordion();
 }
@@ -98,7 +102,8 @@ function makeAccordion() {
         }
     }));
 
-    allTitles.slice(1).forEach( t => t.classList.add('collapsed') );
+    allTitles.forEach( t => t.classList.add('collapsed') );
+    allTitles[0].classList.toggle('collapsed');
 }
 
 function makeAccordion_() {
