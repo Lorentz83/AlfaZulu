@@ -116,34 +116,3 @@ function makeAccordion() {
     // re-enable transitions.
     setTimeout( () => document.body.classList.remove('no-transitions') );
 }
-
-function makeAccordion_() {
-    let first = true;
-    const allTitles = [];
-    const selectTitle = function(selected) {
-        for ( const title of allTitles ) {
-            if ( title == selected ) {
-                title.classList.remove('collapsed');
-                title.nextElementSibling.classList.remove('collapsed');
-            } else {
-                title.classList.add('collapsed');
-                title.nextElementSibling.classList.add('collapsed');
-            }
-        }
-    }
-    for ( const title of document.querySelectorAll('h2') ) {
-        const section = title.nextElementSibling;
-        if ( section.tagName != 'SECTION' ) {
-            console.log('error: h2 without a section', title)
-        }
-        allTitles.push(title);
-        if ( !first ) {
-            title.classList.add('collapsed');
-            section.classList.add('collapsed');
-        }
-        first = false;
-        title.addEventListener('click', function(){
-            selectTitle(title);
-        });
-    }    
-}
