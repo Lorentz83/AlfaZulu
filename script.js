@@ -96,6 +96,7 @@ function makeAccordion() {
         for ( const title of allTitles ) {
             if ( title == t ) {
                 title.classList.remove('collapsed');
+                history.replaceState(null, '', '#' + t.id);
             } else {
                 title.classList.add('collapsed');
             }
@@ -103,7 +104,17 @@ function makeAccordion() {
     }));
 
     allTitles.forEach( t => t.classList.add('collapsed') );
-    allTitles[0].classList.toggle('collapsed');
+
+    const toOpenID = window.location.hash.substring(1);
+
+    let toOpen = allTitles.find( t => t.id === toOpenID );
+    if ( toOpen === undefined ) {
+        toOpen = allTitles[0];
+    }
+    toOpen.classList.toggle('collapsed');
+
+    // re-enable transitions.
+    setTimeout( () => document.body.classList.remove('no-transitions') );
 }
 
 function makeAccordion_() {
