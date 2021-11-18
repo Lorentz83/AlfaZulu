@@ -291,7 +291,13 @@ function getSpelling(text) {
         const l = text.charAt(i);
         // Remove diacritics https://stackoverflow.com/questions/990904
         const n = l.toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
-        const r = letterMap.has(n) ? letterMap.get(n) : '[?]';
+        let r = '[?]'
+        if ( n > 0 && n < 9 ) {
+            r = `[${n}]`;
+        }
+        if ( letterMap.has(n) ) {
+            r = letterMap.get(n);
+        }
         ret.push({letter: l, codeWord: r});
     }
     return ret;
