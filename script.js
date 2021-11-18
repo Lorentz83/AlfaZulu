@@ -5,31 +5,31 @@ window.onload = function() {
 };
 
 const letterMap = new Map();
-letterMap.set('A', 'Alfa'); 
-letterMap.set('B', 'Bravo'); 
-letterMap.set('C', 'Charlie'); 
-letterMap.set('D', 'Delta'); 
-letterMap.set('E', 'Echo'); 
-letterMap.set('F', 'Foxtrot'); 
-letterMap.set('G', 'Golf'); 
-letterMap.set('H', 'Hotel'); 
-letterMap.set('I', 'India'); 
-letterMap.set('J', 'Juliett'); 
-letterMap.set('K', 'Kilo'); 
-letterMap.set('L', 'Lima'); 
-letterMap.set('M', 'Mike'); 
-letterMap.set('N', 'November'); 
-letterMap.set('O', 'Oscar'); 
-letterMap.set('P', 'Papa'); 
-letterMap.set('Q', 'Quebec'); 
-letterMap.set('R', 'Romeo'); 
-letterMap.set('S', 'Sierra'); 
-letterMap.set('T', 'Tango'); 
-letterMap.set('U', 'Uniform'); 
-letterMap.set('V', 'Victor'); 
-letterMap.set('W', 'Whiskey'); 
-letterMap.set('X', 'X-ray'); 
-letterMap.set('Y', 'Yankee'); 
+letterMap.set('A', 'Alfa');
+letterMap.set('B', 'Bravo');
+letterMap.set('C', 'Charlie');
+letterMap.set('D', 'Delta');
+letterMap.set('E', 'Echo');
+letterMap.set('F', 'Foxtrot');
+letterMap.set('G', 'Golf');
+letterMap.set('H', 'Hotel');
+letterMap.set('I', 'India');
+letterMap.set('J', 'Juliett');
+letterMap.set('K', 'Kilo');
+letterMap.set('L', 'Lima');
+letterMap.set('M', 'Mike');
+letterMap.set('N', 'November');
+letterMap.set('O', 'Oscar');
+letterMap.set('P', 'Papa');
+letterMap.set('Q', 'Quebec');
+letterMap.set('R', 'Romeo');
+letterMap.set('S', 'Sierra');
+letterMap.set('T', 'Tango');
+letterMap.set('U', 'Uniform');
+letterMap.set('V', 'Victor');
+letterMap.set('W', 'Whiskey');
+letterMap.set('X', 'X-ray');
+letterMap.set('Y', 'Yankee');
 letterMap.set('Z', 'Zulu');
 
 letterMap.set(' ', '[space]');
@@ -56,31 +56,34 @@ if ('serviceWorker' in navigator) {
 // SpellingBox is the class to manipulate the DOM to render the
 // sequence of code words with their corresponding letters.
 class SpellingBox {
+    #container = null;
+    #table = null;
+
     constructor(container) {
-        this.container = container;
-        this.table = null;
+        this.#container = container;
+        this.#table = null;
     }
 
     clear() {
-        this.container.innerHTML = '';
-        this.table = null;
+        this.#container.innerHTML = '';
+        this.#table = null;
     }
 
     addEntry(letter, codeWord) {
-        if ( !this.table ) {
-            this.table = document.createElement('table');
-            this.container.appendChild(this.table);
+        if ( !this.#table ) {
+            this.#table = document.createElement('table');
+            this.#container.appendChild(this.#table);
         }
-        const t = this.table;
+        const t = this.#table;
 
         const r = document.createElement('tr');
         t.appendChild(r);
-        
+
         const lBox = document.createElement('td');
         r.appendChild(lBox);
         const codeBox = document.createElement('td');
         r.appendChild(codeBox);
-        
+
         lBox.innerText = letter;
         codeBox.innerText = codeWord;
     }
@@ -89,12 +92,13 @@ class SpellingBox {
     //
     // returns: a bollean if there is something to highlight
     highlightFirst() {
-        const rows = this.container.querySelectorAll('tr')
+        const rows = this.#container.querySelectorAll('tr')
         if ( rows.length == 0 ) {
             return false;
         }
         rows.forEach(r => r.classList.remove('highlighted'));
         rows[0].classList.add('highlighted');
+        this.#scrollTo(rows[0]);
         return true;
     }
 
@@ -105,7 +109,7 @@ class SpellingBox {
     //  - moveNext: a boolean to define if we need to move to the next or the previous letter.
     // returns: a boolean if it could move.
     moveHighlight(moveNext) {
-        let curr = this.container.querySelector('tr.highlighted');
+        let curr = this.#container.querySelector('tr.highlighted');
         if ( ! curr ) { // if there is no highligh, highligh the first.
             return this.highlightFirst();
         }
@@ -115,7 +119,15 @@ class SpellingBox {
         }
         curr.classList.remove('highlighted');
         next.classList.add('highlighted');
+
+        this.#scrollTo(next);
+
         return true;
+    }
+
+    #scrollTo(row) {
+        // Keep it centered whenever it is possible.
+        this.#container.scrollTop = row.offsetTop - this.#container.clientHeight / 2 + row.offsetHeight / 2;
     }
 }
 
@@ -123,7 +135,7 @@ class SpellingBox {
 // Folding details are delegated to CSS, this class simply toggles a
 // class to the titles and stores the status in the UR hash.
 class Accordion {
-    
+
     // Initializes the accordion. All the provided titles must have an ID.
     //
     // Args:
@@ -139,19 +151,68 @@ class Accordion {
                 }
             }
         }));
-        
+
         allTitles.forEach( t => t.classList.add('collapsed') );
-        
+
         const toOpenID = window.location.hash.substring(1);
-        
+
         let toOpen = allTitles.find( t => t.id === toOpenID );
         if ( toOpen === undefined ) {
             toOpen = allTitles[0];
         }
         toOpen.classList.toggle('collapsed');
-        
+
         // re-enable transitions on the next event cycle.
         setTimeout( () => document.body.classList.remove('no-transitions') );
+    }
+}
+
+class TouchDirectionDetector {
+    #lastTouch = null;
+    #callbacks = {
+        left: () => console.log("touch moved left"),
+        right: () => console.log("touch moved right"),
+        up: () => console.log("touch moved up"),
+        down: () => console.log("touch moved down"),
+    };
+    #triggerAt = 30;
+
+    constructor(target, callbacks, triggerAt) {
+        this.#callbacks = {...this.#callbacks, ...callbacks};
+
+        if ( triggerAt ) {
+            this.#triggerAt = triggerAt;
+        }
+
+        target.addEventListener('touchstart', e => {
+            e.preventDefault();
+            this.#lastTouch = e.touches[0];
+        });
+
+        target.addEventListener('touchmove', e => {
+            e.preventDefault();
+
+            const curr = e.touches[0];
+            const dx = curr.clientX - this.#lastTouch.clientX;
+            const dy = curr.clientY - this.#lastTouch.clientY;
+
+            if ( Math.abs(dx) > this.#triggerAt ) {
+                if ( dx > 0 ) {
+                    this.#callbacks.left();
+                } else {
+                    this.#callbacks.right();
+                }
+            }
+
+            if ( Math.abs(dy) > this.#triggerAt ) {
+                if ( dy > 0 ) {
+                    this.#callbacks.down();
+                } else {
+                    this.#callbacks.up();
+                }
+                this.#lastTouch = curr;
+            }
+        });
     }
 }
 
@@ -165,14 +226,14 @@ function init() {
 
     const writeSpelling = function(){
         output.clear();
-        
+
         for ( const line of getSpelling(userInput.value) ) {
             output.addEntry(line.letter, line.codeWord);
         }
     }
 
     writeSpelling();
-    
+
     userInput.addEventListener('input', writeSpelling);
     userInput.addEventListener('keypress', e => {
         if (e.key == "Enter") {
@@ -208,6 +269,12 @@ function init() {
             e.preventDefault();
         }
     });
+
+    new TouchDirectionDetector(outputBox, {
+        up: () => output.moveHighlight(true),
+        down: () => output.moveHighlight(false),
+    });
+
     document.querySelector('#reset-to-spell').addEventListener('click', function(){
         userInput.value = '';
         writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
@@ -229,5 +296,3 @@ function getSpelling(text) {
     }
     return ret;
 }
-
-

@@ -17,7 +17,7 @@
   --main-bg-color: #F5F5F6;
   --main-bg-color-dark: #E1E2E1;
   --main-bg-color-light: #FFF;
-  
+
   --main-fg-color: #000;
 
   --header-height: 3rem;
@@ -147,9 +147,20 @@ input[type='text']:focus {
 }
 
 #reset-to-spell:hover {
-  background-color: var(--main-secondary-bg-color);  
+  background-color: var(--main-secondary-bg-color);
 }
 
 #reset-to-spell:active {
   background-color: var(--main-secondary-bg-color-light);
+}
+
+h2#spelling + section {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+h2#spelling + section > #spelled {
+  overflow: hidden;
+  margin-bottom: 0;
 }
