@@ -41,6 +41,7 @@ letterMap.set(':', '[colon]');
 letterMap.set('&', '[ampersand]');
 letterMap.set('@', '[at]');
 
+// All the service worker initialization is in this block.
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
@@ -52,7 +53,8 @@ if ('serviceWorker' in navigator) {
         });
 }
 
-
+// SpellingBox is the class to manipulate the DOM to render the
+// sequence of code words with their corresponding letters.
 class SpellingBox {
     constructor(container) {
         this.container = container;
@@ -64,7 +66,7 @@ class SpellingBox {
         this.table = null;
     }
 
-    addLine(letter, codeWord) {
+    addEntry(letter, codeWord) {
         if ( !this.table ) {
             this.table = document.createElement('table');
             this.container.appendChild(this.table);
@@ -83,6 +85,9 @@ class SpellingBox {
         codeBox.innerText = codeWord;
     }
 
+    // highlightFirst highlights the 1st letter.
+    //
+    // returns: a bollean if there is something to highlight
     highlightFirst() {
         const rows = this.container.querySelectorAll('tr')
         if ( rows.length == 0 ) {
@@ -93,10 +98,16 @@ class SpellingBox {
         return true;
     }
 
+    // moveHighlight moves the highlight one position by one.
+    // If no highlight is present it is added on the 1st letter.
+    //
+    // Args:
+    //  - moveNext: a boolean to define if we need to move to the next or the previous letter.
+    // returns: a boolean if it could move.
     moveHighlight(moveNext) {
         let curr = this.container.querySelector('tr.highlighted');
         if ( ! curr ) { // if there is no highligh, highligh the first.
-            return this.highlighFirst();
+            return this.highlightFirst();
         }
         const next = moveNext ? curr.nextElementSibling : curr.previousElementSibling;
         if ( ! next || next.tagName !== 'TR' ) {
@@ -108,19 +119,55 @@ class SpellingBox {
     }
 }
 
+// Accordion is the DOM handling to make an accordion UI.
+// Folding details are delegated to CSS, this class simply toggles a
+// class to the titles and stores the status in the UR hash.
+class Accordion {
+    
+    // Initializes the accordion. All the provided titles must have an ID.
+    //
+    // Args:
+    //  - allTitles: an array of dom objects, one for each title of the accordion.
+    constructor(allTitles) {
+        allTitles.forEach( t => t.addEventListener('click', function(){
+            for ( const title of allTitles ) {
+                if ( title == t ) {
+                    title.classList.remove('collapsed');
+                    history.replaceState(null, '', '#' + t.id);
+                } else {
+                    title.classList.add('collapsed');
+                }
+            }
+        }));
+        
+        allTitles.forEach( t => t.classList.add('collapsed') );
+        
+        const toOpenID = window.location.hash.substring(1);
+        
+        let toOpen = allTitles.find( t => t.id === toOpenID );
+        if ( toOpen === undefined ) {
+            toOpen = allTitles[0];
+        }
+        toOpen.classList.toggle('collapsed');
+        
+        // re-enable transitions on the next event cycle.
+        setTimeout( () => document.body.classList.remove('no-transitions') );
+    }
+}
+
 function init() {
+    new Accordion([...document.querySelectorAll('h2')]);
+
     const userInput = document.querySelector('#to-spell');
 
     const outputBox = document.querySelector('#spelled');
     const output = new SpellingBox(outputBox);
 
-    const spellingOutput = {};
-
     const writeSpelling = function(){
         output.clear();
         
-        for ( const line of updateSpelling(userInput.value) ) {
-            output.addLine(line.letter, line.codeWord);
+        for ( const line of getSpelling(userInput.value) ) {
+            output.addEntry(line.letter, line.codeWord);
         }
     }
 
@@ -155,11 +202,13 @@ function init() {
         userInput.value = '';
         writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
     });
-
-    makeAccordion();
 }
 
-function updateSpelling(text) {
+// getSpelling returns the spelling of the text.
+// It removes the diacritics, correctly handle the case and some common symbols.
+//
+// returns: an array of {letter, codeWord}.
+function getSpelling(text) {
     let ret = [];
     for (var i = 0; i < text.length; i++) {
         const l = text.charAt(i);
@@ -172,30 +221,3 @@ function updateSpelling(text) {
 }
 
 
-function makeAccordion() {
-    const allTitles = [...document.querySelectorAll('h2')];
-
-    allTitles.forEach( t => t.addEventListener('click', function(){
-        for ( const title of allTitles ) {
-            if ( title == t ) {
-                title.classList.remove('collapsed');
-                history.replaceState(null, '', '#' + t.id);
-            } else {
-                title.classList.add('collapsed');
-            }
-        }
-    }));
-
-    allTitles.forEach( t => t.classList.add('collapsed') );
-
-    const toOpenID = window.location.hash.substring(1);
-
-    let toOpen = allTitles.find( t => t.id === toOpenID );
-    if ( toOpen === undefined ) {
-        toOpen = allTitles[0];
-    }
-    toOpen.classList.toggle('collapsed');
-
-    // re-enable transitions.
-    setTimeout( () => document.body.classList.remove('no-transitions') );
-}
