@@ -176,8 +176,18 @@ function init() {
     userInput.addEventListener('input', writeSpelling);
     userInput.addEventListener('keypress', e => {
         if (e.key == "Enter") {
-            userInput.blur(); // To make virtual keyboard disappear on mobile.
+            // On mobile we want the virtual keyboard to disappear to get some
+            // more space for the spelling table.
+            userInput.blur();
             output.highlightFirst();
+            const h = window.innerHeight;
+            setTimeout( () => {
+                if ( h === window.innerHeight ) {
+                    // If the window size didn't change, we can assume we don't have
+                    // a virtual keyboard, therefore re-focus the user input.
+                    userInput.focus();
+                }
+            }, 100);
         }
     });
     userInput.addEventListener('keydown', e => {
