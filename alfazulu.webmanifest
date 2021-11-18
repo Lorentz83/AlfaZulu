@@ -1,0 +1,21 @@
+{
+  "name": "AlfaZulu",
+  "short_name": "AlfaZulu",
+  "description": "A NATO phonetic alphabet spelling tool",
+  "icons": [
+    {
+      "src": "ico-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "ico-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#280680",
+  "background_color": "#F5F5F6"
+}
