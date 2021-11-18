@@ -104,6 +104,12 @@ table {
   box-shadow: 1px 1px 3px #4f4f4f;
 }
 
+tr.highlighted {
+  background-color: var(--main-secondary-bg-color-light);
+  color: var(--main-secondary-fg-color-dark);
+  box-shadow: 0 0 3px 3px var(--main-secondary-bg-color-dark);
+}
+
 td {
   border: 1px solid gray;
   padding: .5ex 1em;
