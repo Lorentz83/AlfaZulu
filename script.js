@@ -58,18 +58,26 @@ if ('serviceWorker' in navigator) {
 class SpellingBox {
     #container = null;
     #table = null;
+    #quickView = null;
 
     constructor(container) {
         this.#container = container;
         this.#table = null;
+        this.#quickView = null;
     }
 
     clear() {
         this.#container.innerHTML = '';
         this.#table = null;
+        this.#quickView = null;
     }
 
     addEntry(letter, codeWord) {
+        if ( !this.#quickView ) {
+            this.#quickView = document.createElement('div');
+            this.#quickView.id = 'quick-view';
+            this.#container.appendChild(this.#quickView);
+        }
         if ( !this.#table ) {
             this.#table = document.createElement('table');
             this.#container.appendChild(this.#table);
@@ -86,6 +94,12 @@ class SpellingBox {
 
         lBox.innerText = letter;
         codeBox.innerText = codeWord;
+
+        const qw = this.#quickView;
+
+        const l = document.createElement('span');
+        qw.appendChild(l);
+        l.innerText = letter;
     }
 
     // highlightFirst highlights the 1st letter.
@@ -99,6 +113,11 @@ class SpellingBox {
         rows.forEach(r => r.classList.remove('highlighted'));
         rows[0].classList.add('highlighted');
         this.#scrollTo(rows[0]);
+
+        const letters = this.#quickView.querySelectorAll('span');
+        letters.forEach(r => r.classList.remove('highlighted'));
+        letters[0].classList.add('highlighted');
+
         return true;
     }
 
@@ -109,20 +128,35 @@ class SpellingBox {
     //  - moveNext: a boolean to define if we need to move to the next or the previous letter.
     // returns: a boolean if it could move.
     moveHighlight(moveNext) {
-        let curr = this.#container.querySelector('tr.highlighted');
-        if ( ! curr ) { // if there is no highligh, highligh the first.
+        const r = this.#moveSingleHighlight(moveNext, this.#table)
+        if ( r === false ) {
             return this.highlightFirst();
         }
-        const next = moveNext ? curr.nextElementSibling : curr.previousElementSibling;
-        if ( ! next || next.tagName !== 'TR' ) {
+        if ( r === true ) {
             return false;
+        }
+        this.#scrollTo(r);
+
+        this.#moveSingleHighlight(moveNext, this.#quickView)
+
+        return true;
+    }
+
+    // return: true if the highlight cannot be moved (already at end or start)
+    //         false if the highlight is not present
+    //         the new dom highlighted otherwise
+    #moveSingleHighlight(moveNext, container) {
+        let curr = container.querySelector('.highlighted');
+        if ( ! curr ) { // if there is no highligh, highligh the first.
+            return false
+        }
+        const next = moveNext ? curr.nextElementSibling : curr.previousElementSibling;
+        if ( ! next ) {
+            return true;
         }
         curr.classList.remove('highlighted');
         next.classList.add('highlighted');
-
-        this.#scrollTo(next);
-
-        return true;
+        return next
     }
 
     #scrollTo(row) {

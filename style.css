@@ -110,6 +110,12 @@ tr.highlighted {
   box-shadow: 0 0 3px 3px var(--main-secondary-bg-color-dark);
 }
 
+span.highlighted {
+  color: var(--main-secondary-bg-color-dark);
+  text-shadow: 0 0 3px var(--main-secondary-bg-color-dark);
+  font-size: 150%
+}
+
 td {
   border: 1px solid gray;
   padding: .5ex 1em;
@@ -163,4 +169,17 @@ h2#spelling + section {
 h2#spelling + section > #spelled {
   overflow: hidden;
   margin-bottom: 0;
+  padding: 0 1em;
+}
+
+h2#spelling + section * {
+  transition: all .2s;
+}
+
+h2#spelling + section #quick-view {
+  display: flex;
+  height: 3em;
+  align-items: center;
+  font-family: monospace;
+  font-size: 140%;
 }
