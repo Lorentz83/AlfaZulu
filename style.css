@@ -161,25 +161,10 @@ input[type='text']:focus {
 }
 
 h2#spelling + section {
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-h2#spelling + section > #spelled {
-  overflow: hidden;
-  margin-bottom: 0;
-  padding: 0 1em;
-}
-
 h2#spelling + section * {
   transition: all .2s;
-}
-
-h2#spelling + section #quick-view {
-  display: flex;
-  height: 3em;
-  align-items: center;
-  font-family: monospace;
-  font-size: 140%;
 }

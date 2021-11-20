@@ -76,6 +76,12 @@ class SpellingBox {
         if ( !this.#quickView ) {
             this.#quickView = document.createElement('div');
             this.#quickView.id = 'quick-view';
+            this.#quickView.style.display = 'flex';
+            this.#quickView.style.height = '3em';
+            this.#quickView.style.alignItems = 'center';
+            this.#quickView.style.fontFamily = 'monospace';
+            this.#quickView.style.fontSize = '140%';
+
             this.#container.appendChild(this.#quickView);
         }
         if ( !this.#table ) {
@@ -104,7 +110,7 @@ class SpellingBox {
 
     // highlightFirst highlights the 1st letter.
     //
-    // returns: a bollean if there is something to highlight
+    // returns: a boolean if there is something to highlight
     highlightFirst() {
         const rows = this.#container.querySelectorAll('tr')
         if ( rows.length == 0 ) {
