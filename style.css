@@ -96,7 +96,8 @@ h2.collapsed + section {
 h2 + section {
   overflow: auto;
   transition: height .35s;
-  height: calc( 100vh - var(--header-height-big) - 2 * var(--header-height) - var(--header-height-small) );
+  /* number of sections here */
+  height: calc( 100vh - var(--header-height-big) - 3 * var(--header-height) - var(--header-height-small) );
 }
 
 table {
@@ -135,22 +136,31 @@ input[type='text']:focus {
 
 #reset-to-spell  {
   position: relative;
+  left: -2.5em;
+}
+
+#save-to-spell {
+  font-size: 110%;
+}
+
+input[type='button'] {
   width: 2em;
   height: 2em;
   border-radius: 2em;
   border: 0;
   color: var(--main-secondary-fg-color-dark);
   background-color: var(--main-secondary-bg-color-dark);
-  left: -2.5em;
   cursor: pointer;
   transition: all .2s;
+  box-shadow: 1px 1px 3px #4f4f4f;
 }
 
-#reset-to-spell:hover {
+input[type='button']:hover {
   background-color: var(--main-secondary-bg-color);
+  box-shadow: 2px 2px 5px #4f4f4f;
 }
 
-#reset-to-spell:active {
+input[type='button']:active {
   background-color: var(--main-secondary-bg-color-light);
 }
 

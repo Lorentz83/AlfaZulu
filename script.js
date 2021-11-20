@@ -4,6 +4,8 @@ window.onload = function() {
   init();
 };
 
+const storagePrefix = 'AlfaZulu-';
+
 const letterMap = new Map();
 letterMap.set('A', 'Alfa');
 letterMap.set('B', 'Bravo');
@@ -136,13 +138,17 @@ class SpellingBox {
 // class to the titles and stores the status in the UR hash.
 class Accordion {
 
+    #allTitles = [];
+
     // Initializes the accordion. All the provided titles must have an ID.
     //
     // Args:
     //  - allTitles: an array of dom objects, one for each title of the accordion.
     constructor(allTitles) {
-        allTitles.forEach( t => t.addEventListener('click', function(){
-            for ( const title of allTitles ) {
+        this.#allTitles = allTitles;
+
+        this.#allTitles.forEach( t => t.addEventListener('click', () => {
+            for ( const title of this.#allTitles ) {
                 if ( title == t ) {
                     title.classList.remove('collapsed');
                     history.replaceState(null, '', '#' + t.id);
@@ -152,18 +158,28 @@ class Accordion {
             }
         }));
 
-        allTitles.forEach( t => t.classList.add('collapsed') );
-
-        const toOpenID = window.location.hash.substring(1);
-
-        let toOpen = allTitles.find( t => t.id === toOpenID );
-        if ( toOpen === undefined ) {
-            toOpen = allTitles[0];
-        }
-        toOpen.classList.toggle('collapsed');
+        this.openCurrentHash();
+        window.addEventListener("hashchange", () => this.openCurrentHash());
 
         // re-enable transitions on the next event cycle.
         setTimeout( () => document.body.classList.remove('no-transitions') );
+    }
+
+    openCurrentHash() {
+        this.open(window.location.hash.substring(1));
+    }
+
+    open(id) {
+        let toOpen = this.#allTitles[0];
+        if ( id != '') {
+            toOpen = this.#allTitles.find( t => t.id === id );
+        }
+        if ( toOpen === undefined ) {
+            return false;
+        }
+        this.#allTitles.forEach( t => t.classList.add('collapsed') );
+        toOpen.classList.toggle('collapsed');
+        return true;
     }
 }
 
@@ -216,6 +232,40 @@ class TouchDirectionDetector {
     }
 }
 
+class SavedWords {
+    #savedWords = null;
+
+    constructor() {
+        const saved = JSON.parse(localStorage.getItem(`${storagePrefix}saved-words`));
+        try {
+            this.#savedWords = new Set(saved);
+            // TODO add more validation.
+        } catch(e) {
+            console.log('error reading saved words:', e, saved)
+            this.#savedWords = new Set();
+        }
+    }
+
+    #save() {
+        const s = JSON.stringify([...this.#savedWords]);
+        localStorage.setItem(`${storagePrefix}saved-words`, s);
+    }
+
+    add(word) {
+        this.#savedWords.add(word);
+        this.#save();
+    }
+
+    getAll() {
+        return [...this.#savedWords].sort();
+    }
+
+    deleteAll() {
+        this.#savedWords = new Set();
+        this.#save();
+    }
+}
+
 function init() {
     new Accordion([...document.querySelectorAll('h2')]);
 
@@ -224,7 +274,55 @@ function init() {
     const outputBox = document.querySelector('#spelled');
     const output = new SpellingBox(outputBox);
 
+
+    userInput.value = localStorage.getItem(`${storagePrefix}current-word`);
+
+    const savedWords = new SavedWords()
+
+    const displaySavedWords = function() {
+        const words = savedWords.getAll();
+        const box = document.querySelector('#saved-list');
+        box.innerHTML = '';
+
+        if ( words.length == 0 ) {
+            const p = document.createElement('p');
+            box.appendChild(p);
+            p.innerHTML = `
+        You didn't save any word to spell yet.</br>
+        Don't worry, everything you write here stays on your device only.</br>
+        Just tap the save button nearby the word while you write it.
+`;
+        } else {
+
+            const ul = document.createElement('ul');
+            box.appendChild(ul);
+
+            for ( const w of words ) {
+                const li = document.createElement('li');
+                ul.appendChild(li);
+                const a = document.createElement('a');
+                li.appendChild(a);
+                a.innerText = w;
+                a.href="#spelling"
+                a.addEventListener('click', () => {
+                    userInput.value = a.innerText;
+                });
+            }
+
+            const btn = document.createElement('button');
+            box.appendChild(btn);
+            btn.innerText = 'Delete all';
+
+            btn.addEventListener('click', function(){
+                savedWords.deleteAll();
+                displaySavedWords();
+            });
+        }
+    }
+    displaySavedWords();
+
     const writeSpelling = function(){
+        localStorage.setItem(`${storagePrefix}current-word`, userInput.value);
         output.clear();
 
         for ( const line of getSpelling(userInput.value) ) {
@@ -278,6 +376,11 @@ function init() {
     document.querySelector('#reset-to-spell').addEventListener('click', function(){
         userInput.value = '';
         writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
+    });
+    document.querySelector('#save-to-spell').addEventListener('click', function(){
+        savedWords.add(userInput.value);
+        displaySavedWords();
+        window.location.hash = '#saved';
     });
 }
 
