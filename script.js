@@ -73,21 +73,11 @@ class SpellingBox {
 
     addEntry(letter, codeWord) {
         if ( !this.#table ) {
-            this.#table = document.createElement('table');
-            this.#container.appendChild(this.#table);
+            this.#table = new Table();
+            this.#container.appendChild(this.#table.domElement);
         }
         const t = this.#table;
-
-        const r = document.createElement('tr');
-        t.appendChild(r);
-
-        const lBox = document.createElement('td');
-        r.appendChild(lBox);
-        const codeBox = document.createElement('td');
-        r.appendChild(codeBox);
-
-        lBox.innerText = letter;
-        codeBox.innerText = codeWord;
+        this.#table.addRow(letter, codeWord);
     }
 
     // highlightFirst highlights the 1st letter.
@@ -256,6 +246,11 @@ class SavedWords {
         this.#save();
     }
 
+    delete(word) {
+        this.#savedWords.delete(word);
+        this.#save();
+    }
+
     getAll() {
         return [...this.#savedWords].sort();
     }
@@ -263,6 +258,39 @@ class SavedWords {
     deleteAll() {
         this.#savedWords = new Set();
         this.#save();
+    }
+}
+
+// Table is a helper to easily create HTML tables.
+class Table {
+    domElement = null;
+
+    // id is optional. If present must be a string.
+    constructor(id) {
+        this.domElement = document.createElement('table');
+        if ( id ) {
+            this.domElement.id = id;
+        }
+    }
+
+    get classList() {
+        return this.domElement.classList;
+    }
+
+    // addRow appends a new row to the table.
+    // Each argument is a new cell, it must be either a string or a dom object.
+    addRow(...cells) {
+        const tr = document.createElement('tr');
+        this.domElement.appendChild(tr);
+
+        for ( let c of cells ) {
+            if ( typeof c === 'string' ) {
+                c = document.createTextNode(c)
+            }
+            const td = document.createElement('td');
+            tr.appendChild(td);
+            td.appendChild(c);
+        }
     }
 }
 
@@ -293,30 +321,39 @@ function init() {
         Just tap the save button nearby the word while you write it.
 `;
         } else {
-
-            const ul = document.createElement('ul');
-            box.appendChild(ul);
+            const table = new Table();
+            table.classList.add('borderless');
+            box.appendChild(table.domElement);
 
             for ( const w of words ) {
-                const li = document.createElement('li');
-                ul.appendChild(li);
                 const a = document.createElement('a');
-                li.appendChild(a);
                 a.innerText = w;
                 a.href="#spelling"
                 a.addEventListener('click', () => {
                     userInput.value = a.innerText;
                 });
+
+                const b = document.createElement('input');
+                b.type = 'button';
+                b.title = 'Delete';
+                b.value = '✕';
+                b.addEventListener('click', () => {
+                    savedWords.delete(w);
+                    displaySavedWords();
+                });
+
+                table.addRow(b, a);
             }
 
             const btn = document.createElement('button');
-            box.appendChild(btn);
-            btn.innerText = 'Delete all';
+            btn.innerText = '✕ Delete all';
 
-            btn.addEventListener('click', function(){
+            btn.addEventListener('click', () => {
                 savedWords.deleteAll();
                 displaySavedWords();
             });
+
+            table.addRow('', btn);
         }
     }
     displaySavedWords();
@@ -378,7 +415,11 @@ function init() {
         writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
     });
     document.querySelector('#save-to-spell').addEventListener('click', function(){
-        savedWords.add(userInput.value);
+        const toSave = userInput.value.trim();
+        if ( toSave == '' ) {
+            return
+        }
+        savedWords.add(toSave);
         displaySavedWords();
         window.location.hash = '#saved';
     });

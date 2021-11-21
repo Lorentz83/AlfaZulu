@@ -100,6 +100,14 @@ h2 + section {
   height: calc( 100vh - var(--header-height-big) - 3 * var(--header-height) - var(--header-height-small) );
 }
 
+table.borderless {
+  box-shadow: none;
+}
+
+table.borderless td {
+  border: none;
+}
+
 table {
   border-collapse: collapse;
   box-shadow: 1px 1px 3px #4f4f4f;
@@ -143,9 +151,8 @@ input[type='text']:focus {
   font-size: 110%;
 }
 
-input[type='button'] {
-  width: 2em;
-  height: 2em;
+input[type='button'],
+button {
   border-radius: 2em;
   border: 0;
   color: var(--main-secondary-fg-color-dark);
@@ -155,12 +162,23 @@ input[type='button'] {
   box-shadow: 1px 1px 3px #4f4f4f;
 }
 
-input[type='button']:hover {
+button {
+  padding: 1ex 1em;
+}
+
+input[type='button'] {
+  width: 2em;
+  height: 2em;
+}
+
+input[type='button']:hover,
+button:hover {
   background-color: var(--main-secondary-bg-color);
   box-shadow: 2px 2px 5px #4f4f4f;
 }
 
-input[type='button']:active {
+input[type='button']:active,
+button:active {
   background-color: var(--main-secondary-bg-color-light);
 }
 
