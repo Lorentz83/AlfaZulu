@@ -36,6 +36,7 @@ letterMap.set('Z', 'Zulu');
 
 letterMap.set(' ', '[space]');
 letterMap.set('.', '[dot]');
+letterMap.set(',', '[comma]');
 letterMap.set('-', '[dash]');
 letterMap.set('_', '[underscore]');
 letterMap.set(';', '[semicolon]');
@@ -436,7 +437,7 @@ function getSpelling(text) {
         // Remove diacritics https://stackoverflow.com/questions/990904
         const n = l.toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
         let r = '[?]'
-        if ( n > 0 && n < 9 ) {
+        if ( n >= 0 && n <= 9 ) {
             r = `[${n}]`;
         }
         if ( letterMap.has(n) ) {
