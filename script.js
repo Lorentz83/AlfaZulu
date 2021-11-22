@@ -319,7 +319,7 @@ function init() {
             p.innerHTML = `
         You didn't save any word to spell yet.</br>
         Don't worry, everything you write here stays on your device only.</br>
-        Just tap the save button nearby the word while you write it.
+        Just tap the save button nearby the word while you write it in the <a href="#spelling">spelling tool</a>.
 `;
         } else {
             const table = new Table();
@@ -360,10 +360,12 @@ function init() {
     displaySavedWords();
 
     const writeSpelling = function(){
-        localStorage.setItem(`${storagePrefix}current-word`, userInput.value);
+        const word = userInput.value.trim();
+
+        localStorage.setItem(`${storagePrefix}current-word`, word);
         output.clear();
 
-        for ( const line of getSpelling(userInput.value) ) {
+        for ( const line of getSpelling(word) ) {
             output.addEntry(line.letter, line.codeWord);
         }
     }

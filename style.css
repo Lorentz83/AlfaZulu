@@ -20,11 +20,13 @@
 
   --main-fg-color: #000;
 
+  /* Heder sizing and number */
   --header-height: 3rem;
   --header-height-big: 4rem;
-  --header-height-small: 2rem;:
-}
+  --header-height-small: 1.5rem;
 
+  --number-of-sections: 3;
+}
 
 * {
   box-sizing: border-box;
@@ -56,25 +58,31 @@ section > *:last-child {
 h1, h2, footer {
   width: 100%;
   margin: 0;
-  padding: .5ex 1em;
-  height: var(--header-height-big);
-  line-height: calc( var(--header-height-big) - 1ex );
+  padding: 0 1em;
   background-color: var(--main-primary-bg-color-dark);
   color:  var(--main-primary-fg-color-dark);
+
+  height: var(--title-height);
+  line-height: var(--title-height) ;
+  font-size: calc( var(--title-height) * .5 );
+}
+
+h1 {
+  --title-height: var(--header-height-big);
+}
+
+h2 {
+  --title-height: var(--header-height);
 }
 
 footer {
-  height: var(--header-height-small);
-  line-height: calc( var(--header-height-small) - 1ex );
-  font-size: 80%;
+  --title-height: var(--header-height-small)
 }
 
 h2 {
   cursor: pointer;
   background-color: var(--main-primary-bg-color);
   color:  var(--main-primary-fg-color);
-  height: var(--header-height);
-  line-height: calc( var(--header-height) - 1ex );
 }
 
 h2::before {
@@ -96,8 +104,7 @@ h2.collapsed + section {
 h2 + section {
   overflow: auto;
   transition: height .35s;
-  /* number of sections here */
-  height: calc( 100vh - var(--header-height-big) - 3 * var(--header-height) - var(--header-height-small) );
+  height: calc( 100vh - var(--header-height-big) - var(--number-of-sections) * var(--header-height) - var(--header-height-small) );
 }
 
 table.borderless {
@@ -191,4 +198,27 @@ h2#spelling + section {
 h2#spelling + section > #spelled {
   overflow: hidden;
   margin-bottom: 0;
+}
+
+
+/* mobile landscape */
+@media screen and (max-height: 400px) {
+  h1 {
+    display: none;
+  }
+
+  :root {
+    --header-height-big: 0px;
+    --header-height: 2rem;
+  }
+
+  h2#spelling + section {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+
+  #spelled {
+    margin: 0;
+  }
 }
