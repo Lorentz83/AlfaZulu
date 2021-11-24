@@ -45,9 +45,14 @@
     <h2 id="spelling">Spelling tool</h2>
     <section>
       <div>
-        <input autocomplete="off" type="text" value="abcdefghijklmnopqrstuvwxyz1234567890-_,.;'{}[]" id="to-spell"/><input type="button" value="✕" id="reset-to-spell"/>
+        <input autocomplete="off" type="text" value="" id="to-spell"/><input type="button" value="✕" title="delete" id="reset-to-spell"/><input type="button" value="+" title="save" id="save-to-spell"/>
       </div>
       <div id="spelled"></div>
+    </section>
+    <h2 id="saved">Saved words</h2>
+    <section>
+      <div id="saved-list">
+      </div>
     </section>
     <footer>© 2021</footer>
   </body>

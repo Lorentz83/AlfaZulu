@@ -4,6 +4,8 @@ window.onload = function() {
   init();
 };
 
+const storagePrefix = 'AlfaZulu-';
+
 const letterMap = new Map();
 letterMap.set('A', 'Alfa');
 letterMap.set('B', 'Bravo');
@@ -34,6 +36,7 @@ letterMap.set('Z', 'Zulu');
 
 letterMap.set(' ', '[space]');
 letterMap.set('.', '[dot]');
+letterMap.set(',', '[comma]');
 letterMap.set('-', '[dash]');
 letterMap.set('_', '[underscore]');
 letterMap.set(';', '[semicolon]');
@@ -85,27 +88,15 @@ class SpellingBox {
             this.#container.appendChild(this.#quickView);
         }
         if ( !this.#table ) {
-            this.#table = document.createElement('table');
-            this.#container.appendChild(this.#table);
+            this.#table = new Table();
+            this.#container.appendChild(this.#table.domElement);
         }
-        const t = this.#table;
-
-        const r = document.createElement('tr');
-        t.appendChild(r);
-
-        const lBox = document.createElement('td');
-        r.appendChild(lBox);
-        const codeBox = document.createElement('td');
-        r.appendChild(codeBox);
-
-        lBox.innerText = letter;
-        codeBox.innerText = codeWord;
-
-        const qw = this.#quickView;
 
         const l = document.createElement('span');
-        qw.appendChild(l);
+        this.#quickView.appendChild(l);
         l.innerText = letter;
+
+        this.#table.addRow(letter, codeWord);
     }
 
     // highlightFirst highlights the 1st letter.
@@ -134,7 +125,7 @@ class SpellingBox {
     //  - moveNext: a boolean to define if we need to move to the next or the previous letter.
     // returns: a boolean if it could move.
     moveHighlight(moveNext) {
-        const r = this.#moveSingleHighlight(moveNext, this.#table)
+        const r = this.#moveSingleHighlight(moveNext, this.#table.domElement)
         if ( r === false ) {
             return this.highlightFirst();
         }
@@ -176,13 +167,17 @@ class SpellingBox {
 // class to the titles and stores the status in the UR hash.
 class Accordion {
 
+    #allTitles = [];
+
     // Initializes the accordion. All the provided titles must have an ID.
     //
     // Args:
     //  - allTitles: an array of dom objects, one for each title of the accordion.
     constructor(allTitles) {
-        allTitles.forEach( t => t.addEventListener('click', function(){
-            for ( const title of allTitles ) {
+        this.#allTitles = allTitles;
+
+        this.#allTitles.forEach( t => t.addEventListener('click', () => {
+            for ( const title of this.#allTitles ) {
                 if ( title == t ) {
                     title.classList.remove('collapsed');
                     history.replaceState(null, '', '#' + t.id);
@@ -192,18 +187,28 @@ class Accordion {
             }
         }));
 
-        allTitles.forEach( t => t.classList.add('collapsed') );
-
-        const toOpenID = window.location.hash.substring(1);
-
-        let toOpen = allTitles.find( t => t.id === toOpenID );
-        if ( toOpen === undefined ) {
-            toOpen = allTitles[0];
-        }
-        toOpen.classList.toggle('collapsed');
+        this.openCurrentHash();
+        window.addEventListener("hashchange", () => this.openCurrentHash());
 
         // re-enable transitions on the next event cycle.
         setTimeout( () => document.body.classList.remove('no-transitions') );
+    }
+
+    openCurrentHash() {
+        this.open(window.location.hash.substring(1));
+    }
+
+    open(id) {
+        let toOpen = this.#allTitles[0];
+        if ( id != '') {
+            toOpen = this.#allTitles.find( t => t.id === id );
+        }
+        if ( toOpen === undefined ) {
+            return false;
+        }
+        this.#allTitles.forEach( t => t.classList.add('collapsed') );
+        toOpen.classList.toggle('collapsed');
+        return true;
     }
 }
 
@@ -256,6 +261,78 @@ class TouchDirectionDetector {
     }
 }
 
+class SavedWords {
+    #savedWords = null;
+
+    constructor() {
+        const saved = JSON.parse(localStorage.getItem(`${storagePrefix}saved-words`));
+        try {
+            this.#savedWords = new Set(saved);
+            // TODO add more validation.
+        } catch(e) {
+            console.log('error reading saved words:', e, saved)
+            this.#savedWords = new Set();
+        }
+    }
+
+    #save() {
+        const s = JSON.stringify([...this.#savedWords]);
+        localStorage.setItem(`${storagePrefix}saved-words`, s);
+    }
+
+    add(word) {
+        this.#savedWords.add(word);
+        this.#save();
+    }
+
+    delete(word) {
+        this.#savedWords.delete(word);
+        this.#save();
+    }
+
+    getAll() {
+        return [...this.#savedWords].sort();
+    }
+
+    deleteAll() {
+        this.#savedWords = new Set();
+        this.#save();
+    }
+}
+
+// Table is a helper to easily create HTML tables.
+class Table {
+    domElement = null;
+
+    // id is optional. If present must be a string.
+    constructor(id) {
+        this.domElement = document.createElement('table');
+        if ( id ) {
+            this.domElement.id = id;
+        }
+    }
+
+    get classList() {
+        return this.domElement.classList;
+    }
+
+    // addRow appends a new row to the table.
+    // Each argument is a new cell, it must be either a string or a dom object.
+    addRow(...cells) {
+        const tr = document.createElement('tr');
+        this.domElement.appendChild(tr);
+
+        for ( let c of cells ) {
+            if ( typeof c === 'string' ) {
+                c = document.createTextNode(c)
+            }
+            const td = document.createElement('td');
+            tr.appendChild(td);
+            td.appendChild(c);
+        }
+    }
+}
+
 function init() {
     new Accordion([...document.querySelectorAll('h2')]);
 
@@ -264,10 +341,70 @@ function init() {
     const outputBox = document.querySelector('#spelled');
     const output = new SpellingBox(outputBox);
 
+
+    userInput.value = localStorage.getItem(`${storagePrefix}current-word`);
+
+    const savedWords = new SavedWords()
+
+    const displaySavedWords = function() {
+        const words = savedWords.getAll();
+        const box = document.querySelector('#saved-list');
+        box.innerHTML = '';
+
+        if ( words.length == 0 ) {
+            const p = document.createElement('p');
+            box.appendChild(p);
+            p.innerHTML = `
+        You didn't save any word to spell yet.</br>
+        Don't worry, everything you write here stays on your device only.</br>
+        Just tap the save button nearby the word while you write it in the <a href="#spelling">spelling tool</a>.
+`;
+        } else {
+            const table = new Table();
+            table.classList.add('borderless');
+            box.appendChild(table.domElement);
+
+            for ( const w of words ) {
+                const a = document.createElement('a');
+                a.innerText = w;
+                a.href="#spelling"
+                a.addEventListener('click', () => {
+                    userInput.value = a.innerText;
+                    writeSpelling();
+                });
+
+                const b = document.createElement('input');
+                b.type = 'button';
+                b.title = 'Delete';
+                b.value = '✕';
+                b.addEventListener('click', () => {
+                    savedWords.delete(w);
+                    displaySavedWords();
+                });
+
+                table.addRow(b, a);
+            }
+
+            const btn = document.createElement('button');
+            btn.innerText = '✕ Delete all';
+
+            btn.addEventListener('click', () => {
+                savedWords.deleteAll();
+                displaySavedWords();
+            });
+
+            table.addRow('', btn);
+        }
+    }
+    displaySavedWords();
+
     const writeSpelling = function(){
+        const word = userInput.value.trim();
+
+        localStorage.setItem(`${storagePrefix}current-word`, word);
         output.clear();
 
-        for ( const line of getSpelling(userInput.value) ) {
+        for ( const line of getSpelling(word) ) {
             output.addEntry(line.letter, line.codeWord);
         }
     }
@@ -319,6 +456,15 @@ function init() {
         userInput.value = '';
         writeSpelling(); // Input type="reset" doesn't trigger the event "input" on click;
     });
+    document.querySelector('#save-to-spell').addEventListener('click', function(){
+        const toSave = userInput.value.trim();
+        if ( toSave == '' ) {
+            return
+        }
+        savedWords.add(toSave);
+        displaySavedWords();
+        window.location.hash = '#saved';
+    });
 }
 
 // getSpelling returns the spelling of the text.
@@ -332,7 +478,7 @@ function getSpelling(text) {
         // Remove diacritics https://stackoverflow.com/questions/990904
         const n = l.toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
         let r = '[?]'
-        if ( n > 0 && n < 9 ) {
+        if ( n >= 0 && n <= 9 ) {
             r = `[${n}]`;
         }
         if ( letterMap.has(n) ) {
