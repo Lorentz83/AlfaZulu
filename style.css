@@ -202,7 +202,7 @@ h2#spelling + section > #spelled {
 
 
 /* mobile landscape */
-@media screen and (max-height: 400px) {
+@media screen and (orientation: landscape) and (max-height: 400px) {
   h1 {
     display: none;
   }
