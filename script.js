@@ -61,18 +61,26 @@ if ('serviceWorker' in navigator) {
 class SpellingBox {
     #container = null;
     #table = null;
+    #tableContainer = null;
     #quickView = null;
 
     constructor(container) {
         this.#container = container;
+        this.#tableContainer = null;
         this.#table = null;
         this.#quickView = null;
     }
 
     clear() {
-        this.#container.innerHTML = '';
-        this.#table = null;
-        this.#quickView = null;
+        if ( this.#table ) {
+            this.#tableContainer.remove();
+            this.#tableContainer = null;
+            this.#table = null;
+        }
+        if ( this.#quickView ) {
+            this.#quickView.remove();
+            this.#quickView = null;
+        }
     }
 
     addEntry(letter, codeWord) {
@@ -80,21 +88,37 @@ class SpellingBox {
             this.#quickView = document.createElement('div');
             this.#quickView.id = 'quick-view';
             this.#quickView.style.display = 'flex';
-            this.#quickView.style.height = '3em';
+            this.#quickView.style.height = '2em';
+            this.#quickView.style.minHeight = '2em';
             this.#quickView.style.alignItems = 'center';
             this.#quickView.style.fontFamily = 'monospace';
             this.#quickView.style.fontSize = '140%';
+            this.#quickView.style.overflow = 'hidden';
+
+            const pad = document.createElement('div');
+            // If emtpy the scroll doesn't work properly because the element gets collapsed.
+            pad.innerText = '=';
+            pad.style.visibility = 'hidden';
+            pad.style.minWidth = '50vw';
+            this.#quickView.appendChild(pad);
+            this.#quickView.appendChild(pad.cloneNode(true));
 
             this.#container.appendChild(this.#quickView);
         }
-        if ( !this.#table ) {
+        if ( !this.#tableContainer ) {
+            this.#tableContainer = document.createElement('div');
+            this.#tableContainer.style.overflow = 'hidden';
+            this.#tableContainer.style.padding = '5px'; // To leave some space for the shadow. TODO: move in the css.
+            this.#container.appendChild(this.#tableContainer);
+
             this.#table = new Table();
-            this.#container.appendChild(this.#table.domElement);
+            this.#tableContainer.appendChild(this.#table.domElement);
         }
 
         const l = document.createElement('span');
-        this.#quickView.appendChild(l);
+        this.#quickView.insertBefore(l, this.#quickView.lastChild);
         l.innerText = letter;
+        this.#horizontalScroll(this.#quickView.querySelector('span'), this.#quickView);
 
         this.#table.addRow(letter, codeWord);
     }
@@ -103,17 +127,18 @@ class SpellingBox {
     //
     // returns: a boolean if there is something to highlight
     highlightFirst() {
-        const rows = this.#container.querySelectorAll('tr')
+        const rows = this.#tableContainer.querySelectorAll('tr')
         if ( rows.length == 0 ) {
             return false;
         }
         rows.forEach(r => r.classList.remove('highlighted'));
         rows[0].classList.add('highlighted');
-        this.#scrollTo(rows[0]);
+        this.#verticalScroll(rows[0], this.#tableContainer);
 
         const letters = this.#quickView.querySelectorAll('span');
         letters.forEach(r => r.classList.remove('highlighted'));
         letters[0].classList.add('highlighted');
+        this.#horizontalScroll(letters[0], this.#quickView);
 
         return true;
     }
@@ -125,24 +150,22 @@ class SpellingBox {
     //  - moveNext: a boolean to define if we need to move to the next or the previous letter.
     // returns: a boolean if it could move.
     moveHighlight(moveNext) {
-        const r = this.#moveSingleHighlight(moveNext, this.#table.domElement)
+        const r = this.#moveSingleHighlight(moveNext, this.#tableContainer, this.#verticalScroll);
         if ( r === false ) {
             return this.highlightFirst();
         }
         if ( r === true ) {
             return false;
         }
-        this.#scrollTo(r);
 
-        this.#moveSingleHighlight(moveNext, this.#quickView)
-
+        this.#moveSingleHighlight(moveNext, this.#quickView, this.#horizontalScroll);
         return true;
     }
 
     // return: true if the highlight cannot be moved (already at end or start)
     //         false if the highlight is not present
     //         the new dom highlighted otherwise
-    #moveSingleHighlight(moveNext, container) {
+    #moveSingleHighlight(moveNext, container, scrollFn) {
         let curr = container.querySelector('.highlighted');
         if ( ! curr ) { // if there is no highligh, highligh the first.
             return false
@@ -153,12 +176,20 @@ class SpellingBox {
         }
         curr.classList.remove('highlighted');
         next.classList.add('highlighted');
+
+        scrollFn(next, container);
+
         return next
     }
 
-    #scrollTo(row) {
+    #verticalScroll(center, container) {
         // Keep it centered whenever it is possible.
-        this.#container.scrollTop = row.offsetTop - this.#container.clientHeight / 2 + row.offsetHeight / 2;
+        container.scrollTop = center.offsetTop - container.clientHeight / 2 + center.offsetHeight / 2;
+    }
+
+    #horizontalScroll(center, container) {
+        // Keep it centered whenever it is possible.
+        container.scrollLeft = center.offsetLeft - container.clientWidth / 2 + center.offsetWidth / 2;
     }
 }
 
@@ -338,7 +369,7 @@ function init() {
 
     const userInput = document.querySelector('#to-spell');
 
-    const outputBox = document.querySelector('#spelled');
+    const outputBox = document.querySelector('#spelling-section');
     const output = new SpellingBox(outputBox);
 
 
@@ -447,10 +478,11 @@ function init() {
         }
     });
 
-    new TouchDirectionDetector(outputBox, {
-        up: () => output.moveHighlight(true),
-        down: () => output.moveHighlight(false),
-    });
+    // TODO re-enable this on the table and quick view only.
+    // new TouchDirectionDetector(outputBox, {
+    //     up: () => output.moveHighlight(true),
+    //     down: () => output.moveHighlight(false),
+    // });
 
     document.querySelector('#reset-to-spell').addEventListener('click', function(){
         userInput.value = '';
