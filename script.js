@@ -104,6 +104,11 @@ class SpellingBox {
             this.#quickView.appendChild(pad.cloneNode(true));
 
             this.#container.appendChild(this.#quickView);
+
+            new TouchDirectionDetector(this.#quickView, {
+                right: () => this.moveHighlight(true),
+                left: () => this.moveHighlight(false),
+            });
         }
         if ( !this.#tableContainer ) {
             this.#tableContainer = document.createElement('div');
@@ -113,6 +118,11 @@ class SpellingBox {
 
             this.#table = new Table();
             this.#tableContainer.appendChild(this.#table.domElement);
+
+            new TouchDirectionDetector(this.#tableContainer, {
+                up: () => this.moveHighlight(true),
+                down: () => this.moveHighlight(false),
+            });
         }
 
         const l = document.createElement('span');
@@ -251,13 +261,14 @@ class TouchDirectionDetector {
         up: () => console.log("touch moved up"),
         down: () => console.log("touch moved down"),
     };
-    #triggerAt = 30;
+    triggerAt = 30;
 
     constructor(target, callbacks, triggerAt) {
+        console.log('touch registered on ', target)
         this.#callbacks = {...this.#callbacks, ...callbacks};
 
         if ( triggerAt ) {
-            this.#triggerAt = triggerAt;
+            this.triggerAt = triggerAt;
         }
 
         target.addEventListener('touchstart', e => {
@@ -272,15 +283,16 @@ class TouchDirectionDetector {
             const dx = curr.clientX - this.#lastTouch.clientX;
             const dy = curr.clientY - this.#lastTouch.clientY;
 
-            if ( Math.abs(dx) > this.#triggerAt ) {
+            if ( Math.abs(dx) > this.triggerAt ) {
                 if ( dx > 0 ) {
                     this.#callbacks.left();
                 } else {
                     this.#callbacks.right();
                 }
+                this.#lastTouch = curr;
             }
 
-            if ( Math.abs(dy) > this.#triggerAt ) {
+            if ( Math.abs(dy) > this.triggerAt ) {
                 if ( dy > 0 ) {
                     this.#callbacks.down();
                 } else {
@@ -477,12 +489,6 @@ function init() {
             e.preventDefault();
         }
     });
-
-    // TODO re-enable this on the table and quick view only.
-    // new TouchDirectionDetector(outputBox, {
-    //     up: () => output.moveHighlight(true),
-    //     down: () => output.moveHighlight(false),
-    // });
 
     document.querySelector('#reset-to-spell').addEventListener('click', function(){
         userInput.value = '';
