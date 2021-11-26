@@ -139,6 +139,7 @@ class SpellingBox {
         }
         if ( !this.#tableContainer ) {
             this.#tableContainer = document.createElement('div');
+            this.#tableContainer.id = 'spell-list';
             this.#tableContainer.style.overflow = 'hidden';
             this.#tableContainer.style.padding = '5px'; // To leave some space for the shadow. TODO: move in the css.
             this.#container.appendChild(this.#tableContainer);

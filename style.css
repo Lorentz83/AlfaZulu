@@ -155,15 +155,6 @@ input[type='text']:focus {
   outline: none !important;
 }
 
-#reset-to-spell  {
-  position: relative;
-  left: -2.5em;
-}
-
-#save-to-spell {
-  font-size: 110%;
-}
-
 input[type='button'],
 button {
   border-radius: 2em;
@@ -195,18 +186,54 @@ button:active {
   background-color: var(--main-secondary-bg-color-light);
 }
 
-h2#spelling + section {
+#user-controls {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  grid-area: user-controls;
+}
+
+#to-spell {
+  flex-grow: 2;
+  flex-shrink: 10;
+  min-width: 9em;
+}
+
+#reset-to-spell {
+  position: relative;
+  left: -2.5em;
+  flex-shrink: 0;
+}
+
+#save-to-spell {
+  font-size: 110%;
+  flex-shrink: 0;
+}
+
+#quick-view {
+  grid-area: quick-view;
+}
+
+#spell-list {
+  grid-area: spell-list;
+}
+
+h2#spelling + section {
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto auto auto;
+  column-gap: 1em;
+  grid-template-areas:
+    "user-controls"
+    "quick-view"
+    "spell-list";
 }
 
 h2#spelling + section * {
   transition: all .2s;
 }
 
-
 /* mobile landscape */
-@media screen and (orientation: landscape) and (max-height: 400px) {
+@media screen and (orientation: landscape) and (max-height: 500px) {
   h1 {
     display: none;
   }
@@ -217,12 +244,10 @@ h2#spelling + section * {
   }
 
   h2#spelling + section {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-  }
-
-  #spelled {
-    margin: 0;
+  grid-template-columns: minmax(50%, 3fr) minmax(min-content, 2fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "user-controls spell-list"
+    "quick-view    spell-list"
   }
 }
