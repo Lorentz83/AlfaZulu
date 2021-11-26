@@ -56,6 +56,31 @@ if ('serviceWorker' in navigator) {
         });
 }
 
+// Ticker is a simple wrapper around javascript intervals to run a
+// function with a fixed time delay between each call.
+class Ticker {
+    #id = 0;
+
+    // clear stops the ticker.
+    clear() {
+        if ( this.#id ) {
+            clearInterval(this.#id);
+            this.#id = 0;
+        }
+    }
+
+    // start calls fn every delay ms, as long as it returns a value that evaluates to true.
+    // It automatically clears any previous execution.
+    start(fn, delay) {
+        this.clear();
+        this.#id = setInterval(() => {
+            if ( ! fn() ) {
+                this.clear()
+            }
+        }, delay);
+    }
+}
+
 // SpellingBox is the class to manipulate the DOM to render the
 // sequence of code words with their corresponding letters.
 class SpellingBox {
@@ -63,6 +88,8 @@ class SpellingBox {
     #table = null;
     #tableContainer = null;
     #quickView = null;
+    #horizontalEvents = null;
+    #verticalEvents = null;
 
     constructor(container) {
         this.#container = container;
@@ -105,7 +132,7 @@ class SpellingBox {
 
             this.#container.appendChild(this.#quickView);
 
-            new TouchDirectionDetector(this.#quickView, {
+            this.#horizontalEvents = new TouchDirectionDetector(this.#quickView, {
                 right: () => this.moveHighlight(true),
                 left: () => this.moveHighlight(false),
             });
@@ -119,7 +146,7 @@ class SpellingBox {
             this.#table = new Table();
             this.#tableContainer.appendChild(this.#table.domElement);
 
-            new TouchDirectionDetector(this.#tableContainer, {
+            this.#verticalEvents = new TouchDirectionDetector(this.#tableContainer, {
                 up: () => this.moveHighlight(true),
                 down: () => this.moveHighlight(false),
             });
@@ -131,6 +158,15 @@ class SpellingBox {
         this.#horizontalScroll(this.#quickView.querySelector('span'), this.#quickView);
 
         this.#table.addRow(letter, codeWord);
+        this.#adjustScrollSensitivity();
+    }
+
+    #adjustScrollSensitivity() {
+        const w = [...this.#quickView.querySelectorAll('span')]
+              .map(el => el.getBoundingClientRect().width);
+        this.#horizontalEvents.triggerAt = w.reduce( ( p, c ) => p + c, 0 ) / w.length;
+
+        this.#verticalEvents.triggerAt = this.#table.domElement.getBoundingClientRect().height / w.length;
     }
 
     // highlightFirst highlights the 1st letter.
@@ -187,19 +223,45 @@ class SpellingBox {
         curr.classList.remove('highlighted');
         next.classList.add('highlighted');
 
-        scrollFn(next, container);
+        scrollFn.call(this, next, container);
 
         return next
     }
 
+    #verticalScrollTicker = new Ticker();
     #verticalScroll(center, container) {
         // Keep it centered whenever it is possible.
-        container.scrollTop = center.offsetTop - container.clientHeight / 2 + center.offsetHeight / 2;
+        const start = container.scrollTop;
+        const want = center.offsetTop - container.clientHeight / 2 + center.offsetHeight / 2;
+
+        this.#smoothScroll(start, want, this.#verticalScrollTicker, v => { container.scrollTop = v; });
     }
 
+    #horizontalScrollTicker = new Ticker();
     #horizontalScroll(center, container) {
         // Keep it centered whenever it is possible.
-        container.scrollLeft = center.offsetLeft - container.clientWidth / 2 + center.offsetWidth / 2;
+        const start = container.scrollLeft;
+        const want = center.offsetLeft - container.clientWidth / 2 + center.offsetWidth / 2;
+
+        this.#smoothScroll(start, want, this.#horizontalScrollTicker, v => { container.scrollLeft = v; });
+    }
+
+    #smoothScroll(start, want,  ticker, scrollFn) {
+        const stepsNum = 10;
+        const steps = new Array(stepsNum);
+        steps[stepsNum -1] = want;
+        const step = (want - start) / stepsNum;
+        for ( let i = 0; i < steps.length-1 ; i++ ) {
+            steps[i] = start + step;
+            start = steps[i];
+        }
+
+        let i = 0;
+        ticker.start(() => {
+            scrollFn(steps[i++]);
+            return i < steps.length;
+        }, 10);
+
     }
 }
 
@@ -256,10 +318,10 @@ class Accordion {
 class TouchDirectionDetector {
     #lastTouch = null;
     #callbacks = {
-        left: () => console.log("touch moved left"),
-        right: () => console.log("touch moved right"),
-        up: () => console.log("touch moved up"),
-        down: () => console.log("touch moved down"),
+        left: () => {},
+        right: () => {},
+        up: () => {},
+        down: () => {},
     };
     triggerAt = 30;
 
