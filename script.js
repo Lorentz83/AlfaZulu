@@ -120,12 +120,12 @@ class SpellingBox {
             this.#quickView.style.alignItems = 'center';
             this.#quickView.style.fontFamily = 'monospace';
             this.#quickView.style.fontSize = '140%';
+            this.#quickView.style.whiteSpace = 'pre';
             this.#quickView.style.overflow = 'hidden';
 
             const pad = document.createElement('div');
             // If emtpy the scroll doesn't work properly because the element gets collapsed.
-            pad.innerText = '=';
-            pad.style.visibility = 'hidden';
+            pad.innerText = ' ';
             pad.style.minWidth = '50vw';
             this.#quickView.appendChild(pad);
             this.#quickView.appendChild(pad.cloneNode(true));
@@ -327,7 +327,6 @@ class TouchDirectionDetector {
     triggerAt = 30;
 
     constructor(target, callbacks, triggerAt) {
-        console.log('touch registered on ', target)
         this.#callbacks = {...this.#callbacks, ...callbacks};
 
         if ( triggerAt ) {

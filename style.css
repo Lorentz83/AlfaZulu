@@ -220,7 +220,7 @@ button:active {
 h2#spelling + section {
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: min-content min-content auto;
   column-gap: 1em;
   grid-template-areas:
     "user-controls"
@@ -249,5 +249,20 @@ h2#spelling + section * {
   grid-template-areas:
     "user-controls spell-list"
     "quick-view    spell-list"
+  }
+}
+
+/* landscape and with the virtual keyboard on */
+@media screen and (orientation: landscape) and (max-height: 200px) {
+  #user-controls:focus-within {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0 1rem;
+    background-color: var(--main-bg-color);
   }
 }
