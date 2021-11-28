@@ -96,63 +96,83 @@ class SpellingBox {
         this.#tableContainer = null;
         this.#table = null;
         this.#quickView = null;
+        this.#init();
     }
 
     clear() {
-        if ( this.#table ) {
-            this.#tableContainer.remove();
-            this.#tableContainer = null;
-            this.#table = null;
-        }
-        if ( this.#quickView ) {
-            this.#quickView.remove();
-            this.#quickView = null;
+        this.#tableContainer.remove();
+        this.#quickView.remove();
+        this.#init();
+    }
+
+    // render renders a word in the spelling box.
+    // spelled: an array of {letter, codeWord}.
+    render(spelled) {
+        this.#trim(spelled.length);
+        for ( let i = 0 ; i < spelled.length ; i++ ) {
+            const {letter, codeWord} = spelled[i];
+            this.#setOrAddEntry(i, letter, codeWord);
         }
     }
 
-    addEntry(letter, codeWord) {
-        if ( !this.#quickView ) {
-            this.#quickView = document.createElement('div');
-            this.#quickView.id = 'quick-view';
-            this.#quickView.style.display = 'flex';
-            this.#quickView.style.height = '2em';
-            this.#quickView.style.minHeight = '2em';
-            this.#quickView.style.alignItems = 'center';
-            this.#quickView.style.fontFamily = 'monospace';
-            this.#quickView.style.fontSize = '140%';
-            this.#quickView.style.whiteSpace = 'pre';
-            this.#quickView.style.overflow = 'hidden';
+    #init() {
+        this.#quickView = document.createElement('div');
+        this.#container.appendChild(this.#quickView);
+        this.#quickView.id = 'quick-view';
+        this.#quickView.style.display = 'flex';
+        this.#quickView.style.height = '2em';
+        this.#quickView.style.minHeight = '2em';
+        this.#quickView.style.alignItems = 'center';
+        this.#quickView.style.fontFamily = 'monospace';
+        this.#quickView.style.fontSize = '140%';
+        this.#quickView.style.whiteSpace = 'pre';
+        this.#quickView.style.overflow = 'hidden';
 
-            const pad = document.createElement('div');
-            // If emtpy the scroll doesn't work properly because the element gets collapsed.
-            pad.innerText = ' ';
-            pad.style.minWidth = '50vw';
-            this.#quickView.appendChild(pad);
-            this.#quickView.appendChild(pad.cloneNode(true));
+        const pad = document.createElement('div');
+        // If emtpy the scroll doesn't work properly because the element gets collapsed.
+        pad.innerText = ' ';
+        pad.style.minWidth = '50vw';
+        this.#quickView.appendChild(pad);
+        this.#quickView.appendChild(pad.cloneNode(true));
 
-            this.#container.appendChild(this.#quickView);
 
-            this.#horizontalEvents = new TouchDirectionDetector(this.#quickView, {
-                right: () => this.moveHighlight(true),
-                left: () => this.moveHighlight(false),
-            });
+        this.#horizontalEvents = new TouchDirectionDetector(this.#quickView, {
+            right: () => this.moveHighlight(true),
+            left: () => this.moveHighlight(false),
+        });
+
+        this.#tableContainer = document.createElement('div');
+        this.#container.appendChild(this.#tableContainer);
+        this.#tableContainer.id = 'spell-list';
+        this.#tableContainer.style.overflow = 'hidden';
+        this.#tableContainer.style.padding = '5px'; // To leave some space for the shadow. TODO: move in the css.
+
+        this.#table = new Table();
+        this.#tableContainer.appendChild(this.#table.domElement);
+
+        this.#verticalEvents = new TouchDirectionDetector(this.#tableContainer, {
+            up: () => this.moveHighlight(true),
+            down: () => this.moveHighlight(false),
+        });
+    }
+
+    #trim(size) {
+        [...this.#quickView.querySelectorAll('span')].slice(size).forEach(e => e.remove());
+        this.#table.trimRows(size);
+    }
+
+    #setOrAddEntry(i, letter, codeWord) {
+        const spans = this.#quickView.querySelectorAll('span');
+
+        if ( i < spans.length ) {
+            this.#table.replaceRow(i, letter, codeWord);
+            spans[i].innerText = letter;
+        } else {
+            this.#addEntry(letter, codeWord);
         }
-        if ( !this.#tableContainer ) {
-            this.#tableContainer = document.createElement('div');
-            this.#tableContainer.id = 'spell-list';
-            this.#tableContainer.style.overflow = 'hidden';
-            this.#tableContainer.style.padding = '5px'; // To leave some space for the shadow. TODO: move in the css.
-            this.#container.appendChild(this.#tableContainer);
+    }
 
-            this.#table = new Table();
-            this.#tableContainer.appendChild(this.#table.domElement);
-
-            this.#verticalEvents = new TouchDirectionDetector(this.#tableContainer, {
-                up: () => this.moveHighlight(true),
-                down: () => this.moveHighlight(false),
-            });
-        }
-
+    #addEntry(letter, codeWord) {
         const l = document.createElement('span');
         this.#quickView.insertBefore(l, this.#quickView.lastChild);
         l.innerText = letter;
@@ -426,7 +446,20 @@ class Table {
     addRow(...cells) {
         const tr = document.createElement('tr');
         this.domElement.appendChild(tr);
+        this.#setRow(tr, ...cells);
+    }
 
+    // replaceRow replaces the specific row with the new data.
+    //
+    // rowNumber is the 0 indexed row to replace.
+    // Each remaining argument is a new cell, it must be either a string or a dom object.
+    replaceRow(rowNumber, ...cells) {
+        const tr = this.domElement.querySelectorAll('tr')[rowNumber];
+        tr.innerHTML = '';
+        this.#setRow(tr, ...cells);
+    }
+
+    #setRow(tr, ...cells) {
         for ( let c of cells ) {
             if ( typeof c === 'string' ) {
                 c = document.createTextNode(c)
@@ -435,6 +468,11 @@ class Table {
             tr.appendChild(td);
             td.appendChild(c);
         }
+    }
+
+    // trimRows deletes all the rows that exceed the specific size.
+    trimRows(size) {
+        [...this.domElement.querySelectorAll('tr')].slice(size).forEach(r=>r.remove());
     }
 }
 
@@ -507,11 +545,8 @@ function init() {
         const word = userInput.value.trim();
 
         localStorage.setItem(`${storagePrefix}current-word`, word);
-        output.clear();
 
-        for ( const line of getSpelling(word) ) {
-            output.addEntry(line.letter, line.codeWord);
-        }
+        output.render(getSpelling(word));
     }
 
     writeSpelling();
