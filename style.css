@@ -1,3 +1,23 @@
+/**
+ *  Copyright 2021 Lorenzo Bossi
+ *
+ *  This file is part of AlfaZulu.
+ *
+ *  AlfaZulu is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  AlfaZulu is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with AlfaZulu.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
 :root {
   /* https://material.io/resources/color/#!/?view.left=0&view.right=0&primary.color=5E35B1&secondary.color=9CCC65 */
   --main-primary-bg-color: #5e35b1;
@@ -77,6 +97,10 @@ h2 {
 
 footer {
   --title-height: var(--header-height-small)
+}
+
+footer a, footer a:visited {
+  color: var(--main-primary-fg-color-dark);
 }
 
 h2 {
